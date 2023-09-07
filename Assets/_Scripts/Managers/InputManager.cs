@@ -12,6 +12,19 @@ namespace Archer.Managers
 
         private bool isRotating = false;
         private bool isCharging = false;
+        private bool isShooting = false;
+        private bool hasClicked = false;
+
+
+        private enum InputState
+        {
+            Idle,
+            Rotating,
+            Charging,
+            Shooting,
+        }
+
+        private InputState currentState = InputState.Idle;
 
         private void Awake()
         {
@@ -27,30 +40,77 @@ namespace Archer.Managers
 
         private void Update()
         {
-            if (Input.GetMouseButton(0))
+            if (Input.GetMouseButtonDown(0) && !hasClicked)
             {
-                if (!isRotating)
+                switch (currentState)
                 {
-                    Debug.Log("click");
+                    case InputState.Idle:
+                        HandleIdleState();
+                        break;
 
-                    isRotating = true;
-                    OnRotate?.Invoke();
+                    case InputState.Rotating:
+                        HandleRotatingState();
+                        break;
+
+                    case InputState.Charging:
+                        HandleChargingState();
+                        break;
+
+                    case InputState.Shooting:
+                        HandleShootingState();
+                        break;
                 }
-                else
-                {
-                    if (!isCharging)
-                    {
-                        isCharging = true;
-                        isRotating = false;
-                        OnCharge?.Invoke();
-                    }
-                }
+
+                hasClicked = true;
             }
-            else if (Input.GetMouseButton(1) && isCharging)
+
+            if (Input.GetMouseButtonUp(0))
             {
-                OnShoot?.Invoke();
-                isCharging = false;
+                hasClicked = false;
             }
+        }
+
+        private void HandleIdleState()
+        {
+            Debug.Log("click start Rotation");
+            currentState = InputState.Rotating;
+            OnRotate?.Invoke();
+        }
+
+        private void HandleRotatingState()
+        {
+            if (!isCharging)
+            {
+                Debug.Log("click start Charging");
+                currentState = InputState.Charging;
+                OnCharge?.Invoke();
+            }
+
+            /*else
+            {
+                currentState = InputState.Idle;
+            }*/
+        }
+
+        private void HandleChargingState()
+        {
+            if (!isShooting)
+            {
+                Debug.Log("click start Shooting");
+                currentState = InputState.Shooting;
+                OnShoot?.Invoke();
+            }
+
+            /*else
+            {
+                currentState = InputState.Idle;
+            }*/
+        }
+
+        private void HandleShootingState()
+        {
+            Debug.Log("Shooting complete");
+            currentState = InputState.Idle;
         }
     }
 }
