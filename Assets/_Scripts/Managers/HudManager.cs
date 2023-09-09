@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,38 +17,53 @@ namespace Archer.Managers
 
         private void Awake()
         {
+            GameManager.OnGameStageChanged += HandleStageChanged;
+            GameManager.OnGameInit += HandleGameInit;
+
             GameObject bowGameObject = GameObject.FindWithTag("Bow");
             if (bowGameObject != null)
             {
                 bow = bowGameObject.GetComponent<Bow>();
-                if (bow != null)
-                {
-                    bow.OnCharge += HandleBowCharge;
-                    bow.OnCheckArrow += HandleCheckArrow;
-                    bow.OnReloadArrow += HandleReloadArrow;
-                    bow.OnShoot += HandeShootArrow;
-                }
-                else
-                {
-                    Debug.LogError("Bow script not found on the Bow GameObject.");
-                }
             }
             else
             {
                 Debug.LogError("Bow GameObject not found.");
             }
+        }
 
-            GameManager.OnGameInit += HandleGameInit;
+        private void HandleStageChanged(GameState state)
+        {
+            switch (state)
+            {
+                case GameState.CharacterIdle:
+                    HandleICharacterIdle();
+                    break;
+                case GameState.BowChargeStart:
+                    HandleBowChargeStart();
+                    break;
+                case GameState.BowChargeEnd:
+                    HandleBowChargeEnd();
+                    break;
+                case GameState.BowShoot:
+                    HandeShootArrow();
+                    break;
+                case GameState.CheckArrow:
+                    break;
+                case GameState.ReloadArrow:
+                    break;
+                case GameState.Victory:
+                    break;
+                case GameState.Lose:
+                    HandeLose();
+                    break;
+            }
         }
 
 
         private void OnDestroy()
         {
-            bow.OnCharge -= HandleBowCharge;
-            bow.OnCheckArrow -= HandleCheckArrow;
-            bow.OnReloadArrow -= HandleReloadArrow;
-            bow.OnShoot -= HandeShootArrow;
             GameManager.OnGameInit -= HandleGameInit;
+            GameManager.OnGameStageChanged -= HandleStageChanged;
         }
 
         private void HandleGameInit()
@@ -59,47 +71,46 @@ namespace Archer.Managers
             // init 
         }
 
-        private void HandleBowCharge()
+        private void HandleICharacterIdle()
+        {
+            powerSlider.value = 0;
+        }
+
+
+        private void HandleBowChargeStart()
         {
             _powerChargeTween = powerSlider.DOValue(maxValue, powerChargeDuration).SetEase(Ease.Linear).OnComplete(
                 () =>
                 {
                     powerSlider.DOValue(minValue, powerChargeDuration)
                         .SetEase(Ease.Linear)
-                        .OnComplete(HandleBowCharge);
+                        .OnComplete(HandleBowChargeStart);
                 });
+        }
+
+        private void HandleBowChargeEnd()
+        {
+            if (_powerChargeTween != null)
+            {
+                _powerChargeTween.Pause();
+                _powerChargeTween.Kill();
+                bow.forceAmount = powerSlider.value;
+                GameManager.Instance.ChangeGameState(GameState.BowShoot);
+            }
         }
 
         public void HandeShootArrow()
         {
+         
+        }
+
+        private void HandeLose()
+        {
             if (_powerChargeTween != null)
             {
-                Debug.Log("HUD ForceAmount " + powerSlider.value);
-                bow.forceAmount = powerSlider.value;
-                Debug.Log("Pause Charge ui");
                 _powerChargeTween.Pause();
+                _powerChargeTween.Kill();
             }
-        }
-
-        // Event handling methods for Bow events
-        private void HandleBowRotate()
-        {
-            // Handle Bow rotation event in the HUD
-        }
-
-        private void HandleBowShoot()
-        {
-            // Handle Bow shooting event in the HUD
-        }
-
-        private void HandleCheckArrow()
-        {
-            // Handle Bow check arrow event in the HUD
-        }
-
-        private void HandleReloadArrow()
-        {
-            // Handle Bow reload arrow event in the HUD
         }
     }
 }

@@ -18,21 +18,19 @@ namespace Archer.Managers
         public event Action OnNewGame;
         public static event Action<GameState> OnGameStageChanged;
 
-        public GameState CurrentGameState;
+        public GameState currentGameState;
 
-
-        public GameState currentState = GameState.CharacterIdle;
 
         private void Awake()
         {
             if (Instance == null)
             {
                 Instance = this;
-                DontDestroyOnLoad(this);
+                DontDestroyOnLoad(gameObject);
             }
             else
             {
-                Destroy(this);
+                Destroy(gameObject);
             }
         }
 
@@ -43,26 +41,20 @@ namespace Archer.Managers
 
         private void Init()
         {
-            // Set the initial game state to "CharacterIdle"
-            CurrentGameState = GameState.CharacterIdle;
-
-            // Load arrows or perform other initialization tasks
-            // LoadArrows();
-
-            // Trigger the initialization event
+            currentGameState = GameState.CharacterIdle;
             OnGameInit?.Invoke();
         }
 
         public void ChangeGameState(GameState newState)
         {
-            if (CurrentGameState != newState) // Only change if it's a different state
+            if (currentGameState != newState) 
             {
-                Debug.Log("ChangeGameState");
-                CurrentGameState = newState;
+                Debug.Log($"Change {currentGameState} => {newState} ");
+                currentGameState = newState;
                 OnGameStageChanged?.Invoke(newState);
             }
         }
-        
+
 
         public void LoadMainMenu()
         {
@@ -76,11 +68,10 @@ namespace Archer.Managers
 
         public void StartNewGame()
         {
-            Debug.Log("Start New Game");
             OnNewGame?.Invoke();
             LoadGameplay();
-            CurrentGameState = GameState.CharacterIdle;
-            ChangeGameState(CurrentGameState);
+            currentGameState = GameState.CharacterIdle;
+            ChangeGameState(currentGameState);
         }
     }
 
@@ -88,7 +79,9 @@ namespace Archer.Managers
     {
         CharacterIdle,
         BowRotate,
-        BowCharge,
+        BowAim,
+        BowChargeStart,
+        BowChargeEnd,
         BowShoot,
         CheckArrow,
         ReloadArrow,

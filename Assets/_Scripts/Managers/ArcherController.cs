@@ -10,7 +10,6 @@ namespace Archer.Managers
    
 
         private IObjectPool<Arrow> _arrowPool;
-        private Quaternion _idleRotation;
 
         private void Awake()
         {
@@ -29,7 +28,6 @@ namespace Archer.Managers
 
         private void HandleGameInit()
         {
-            _idleRotation = transform.rotation;
             //StartRotationAnimation();
         }
         

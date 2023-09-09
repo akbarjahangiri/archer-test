@@ -26,11 +26,9 @@ public class Arrow : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        Debug.Log("Hit Target");
 
         if (other.gameObject.tag == "Target")
         {
-            Debug.Log("Hit Target");
             transform.SetParent(null);
             rigidbody2D.simulated = false;
         }

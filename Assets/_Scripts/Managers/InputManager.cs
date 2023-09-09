@@ -8,8 +8,7 @@ namespace Archer.Managers
         public static InputManager Instance { get; private set; }
 
 
-        private bool hasClicked = false;
-        private Bow bow;
+        private bool _canClick = false;
 
         private void Awake()
         {
@@ -22,66 +21,46 @@ namespace Archer.Managers
                 Destroy(gameObject);
             }
 
-            GameObject
-                bowGameObject =
-                    GameObject.FindWithTag("Bow");
-            if (bowGameObject != null)
-            {
-                bow = bowGameObject.GetComponent<Bow>();
-                if (bow != null)
-                {
-                }
-                else
-                {
-                    Debug.LogError("Bow script not found on the Bow GameObject.");
-                }
-            }
-            else
-            {
-                Debug.LogError("Bow GameObject not found.");
-            }
-
             GameManager.OnGameInit += HandleGameInit;
         }
 
         private void HandleGameInit()
         {
-            hasClicked = false;
+            _canClick = false;
         }
 
 
         private void Update()
         {
-            if (Input.GetMouseButtonDown(0) && !hasClicked)
+            if (Input.GetMouseButtonDown(0) && !_canClick)
             {
-                Debug.Log("clicked  " + GameManager.Instance.CurrentGameState);
-                hasClicked = true;
-                HandleGameStateBasedOnInput();
+                _canClick = true;
+                InputChange();
             }
 
             if (Input.GetMouseButtonUp(0))
             {
-                hasClicked = false;
+                _canClick = false;
+                Debug.Log(_canClick);
             }
         }
 
-        private void HandleGameStateBasedOnInput()
+        private void InputChange()
         {
-            if (GameManager.Instance.CurrentGameState == GameState.CharacterIdle)
+            switch (GameManager.Instance.currentGameState)
             {
-                Debug.Log("input manager CharacterIdle....");
-                bow.InvokeRotateEvent();
-            }
-            
-            else if (GameManager.Instance.CurrentGameState == GameState.BowCharge)
-            {
-               // GameManager.Instance.ChangeGameState(GameState.BowShoot);
-                bow.InvokeChargeEvent();
-            }
-            else if (GameManager.Instance.CurrentGameState == GameState.BowShoot)
-            {
-                // GameManager.Instance.ChangeGameState(GameState.BowShoot);
-                bow.InvokeShootEvent();
+                case GameState.CharacterIdle:
+                    GameManager.Instance.ChangeGameState(GameState.BowRotate);
+                    break;
+                case GameState.BowRotate:
+                    GameManager.Instance.ChangeGameState(GameState.BowAim);
+                    break;
+                case GameState.BowChargeStart:
+                    GameManager.Instance.ChangeGameState(GameState.BowChargeEnd);
+                    break;
+                case GameState.Lose:
+                    _canClick = false;
+                    break;
             }
         }
     }
