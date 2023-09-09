@@ -16,40 +16,90 @@ namespace Archer.Managers
 
         private Tween _powerChargeTween;
 
-        // Start is called before the first frame update
-        void Start()
+        private Bow bow;
+
+        private void Awake()
         {
-            InputManager.Instance.OnCharge += StartChargeLoop;
-            InputManager.Instance.OnShoot += PauseChargeLoop;
+            GameObject bowGameObject = GameObject.FindWithTag("Bow");
+            if (bowGameObject != null)
+            {
+                bow = bowGameObject.GetComponent<Bow>();
+                if (bow != null)
+                {
+                    bow.OnCharge += HandleBowCharge;
+                    bow.OnCheckArrow += HandleCheckArrow;
+                    bow.OnReloadArrow += HandleReloadArrow;
+                    bow.OnShoot += HandeShootArrow;
+                }
+                else
+                {
+                    Debug.LogError("Bow script not found on the Bow GameObject.");
+                }
+            }
+            else
+            {
+                Debug.LogError("Bow GameObject not found.");
+            }
+
+            GameManager.OnGameInit += HandleGameInit;
         }
+
 
         private void OnDestroy()
         {
-            InputManager.Instance.OnCharge -= StartChargeLoop;
-            InputManager.Instance.OnShoot -= PauseChargeLoop;        }
+            bow.OnCharge -= HandleBowCharge;
+            bow.OnCheckArrow -= HandleCheckArrow;
+            bow.OnReloadArrow -= HandleReloadArrow;
+            bow.OnShoot -= HandeShootArrow;
+            GameManager.OnGameInit -= HandleGameInit;
+        }
 
-        private void StartChargeLoop()
+        private void HandleGameInit()
+        {
+            // init 
+        }
+
+        private void HandleBowCharge()
         {
             _powerChargeTween = powerSlider.DOValue(maxValue, powerChargeDuration).SetEase(Ease.Linear).OnComplete(
                 () =>
                 {
                     powerSlider.DOValue(minValue, powerChargeDuration)
                         .SetEase(Ease.Linear)
-                        .OnComplete(StartChargeLoop);
+                        .OnComplete(HandleBowCharge);
                 });
         }
 
-        public void PauseChargeLoop()
+        public void HandeShootArrow()
         {
             if (_powerChargeTween != null)
             {
+                Debug.Log("HUD ForceAmount " + powerSlider.value);
+                bow.forceAmount = powerSlider.value;
+                Debug.Log("Pause Charge ui");
                 _powerChargeTween.Pause();
             }
         }
 
-        // Update is called once per frame
-        void Update()
+        // Event handling methods for Bow events
+        private void HandleBowRotate()
         {
+            // Handle Bow rotation event in the HUD
+        }
+
+        private void HandleBowShoot()
+        {
+            // Handle Bow shooting event in the HUD
+        }
+
+        private void HandleCheckArrow()
+        {
+            // Handle Bow check arrow event in the HUD
+        }
+
+        private void HandleReloadArrow()
+        {
+            // Handle Bow reload arrow event in the HUD
         }
     }
 }

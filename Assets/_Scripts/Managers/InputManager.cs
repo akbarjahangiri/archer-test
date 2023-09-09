@@ -6,25 +6,10 @@ namespace Archer.Managers
     public class InputManager : MonoBehaviour
     {
         public static InputManager Instance { get; private set; }
-        public event Action OnRotate;
-        public event Action OnCharge;
-        public event Action OnShoot;
 
-        private bool isRotating = false;
-        private bool isCharging = false;
-        private bool isShooting = false;
+
         private bool hasClicked = false;
-
-
-        private enum InputState
-        {
-            Idle,
-            Rotating,
-            Charging,
-            Shooting,
-        }
-
-        private InputState currentState = InputState.Idle;
+        private Bow bow;
 
         private void Awake()
         {
@@ -36,32 +21,42 @@ namespace Archer.Managers
             {
                 Destroy(gameObject);
             }
+
+            GameObject
+                bowGameObject =
+                    GameObject.FindWithTag("Bow");
+            if (bowGameObject != null)
+            {
+                bow = bowGameObject.GetComponent<Bow>();
+                if (bow != null)
+                {
+                }
+                else
+                {
+                    Debug.LogError("Bow script not found on the Bow GameObject.");
+                }
+            }
+            else
+            {
+                Debug.LogError("Bow GameObject not found.");
+            }
+
+            GameManager.OnGameInit += HandleGameInit;
         }
+
+        private void HandleGameInit()
+        {
+            hasClicked = false;
+        }
+
 
         private void Update()
         {
             if (Input.GetMouseButtonDown(0) && !hasClicked)
             {
-                switch (currentState)
-                {
-                    case InputState.Idle:
-                        HandleIdleState();
-                        break;
-
-                    case InputState.Rotating:
-                        HandleRotatingState();
-                        break;
-
-                    case InputState.Charging:
-                        HandleChargingState();
-                        break;
-
-                    case InputState.Shooting:
-                        HandleShootingState();
-                        break;
-                }
-
+                Debug.Log("clicked  " + GameManager.Instance.CurrentGameState);
                 hasClicked = true;
+                HandleGameStateBasedOnInput();
             }
 
             if (Input.GetMouseButtonUp(0))
@@ -70,47 +65,24 @@ namespace Archer.Managers
             }
         }
 
-        private void HandleIdleState()
+        private void HandleGameStateBasedOnInput()
         {
-            Debug.Log("click start Rotation");
-            currentState = InputState.Rotating;
-            OnRotate?.Invoke();
-        }
-
-        private void HandleRotatingState()
-        {
-            if (!isCharging)
+            if (GameManager.Instance.CurrentGameState == GameState.CharacterIdle)
             {
-                Debug.Log("click start Charging");
-                currentState = InputState.Charging;
-                OnCharge?.Invoke();
+                Debug.Log("input manager CharacterIdle....");
+                bow.InvokeRotateEvent();
             }
-
-            /*else
+            
+            else if (GameManager.Instance.CurrentGameState == GameState.BowCharge)
             {
-                currentState = InputState.Idle;
-            }*/
-        }
-
-        private void HandleChargingState()
-        {
-            if (!isShooting)
-            {
-                Debug.Log("click start Shooting");
-                currentState = InputState.Shooting;
-                OnShoot?.Invoke();
+               // GameManager.Instance.ChangeGameState(GameState.BowShoot);
+                bow.InvokeChargeEvent();
             }
-
-            /*else
+            else if (GameManager.Instance.CurrentGameState == GameState.BowShoot)
             {
-                currentState = InputState.Idle;
-            }*/
-        }
-
-        private void HandleShootingState()
-        {
-            Debug.Log("Shooting complete");
-            currentState = InputState.Idle;
+                // GameManager.Instance.ChangeGameState(GameState.BowShoot);
+                bow.InvokeShootEvent();
+            }
         }
     }
 }

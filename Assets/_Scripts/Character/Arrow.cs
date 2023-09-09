@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -12,14 +9,7 @@ public class Arrow : MonoBehaviour
     public bool isShooting;
 
     private float _angle;
-    // public Rigidbody2D headRigidBody2D;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
     void FixedUpdate()
     {
         if (isShooting)
@@ -33,8 +23,6 @@ public class Arrow : MonoBehaviour
         _angle = Mathf.Atan2(-rigidbody2D.velocity.y, -rigidbody2D.velocity.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.AngleAxis(_angle, Vector3.forward);
     }
-
-
 
     private void OnTriggerEnter2D(Collider2D other)
     {

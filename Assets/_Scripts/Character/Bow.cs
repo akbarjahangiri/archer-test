@@ -1,34 +1,51 @@
 using System;
 using Archer.Managers;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace Archer.Character
+namespace Archer.Managers
 {
     public class Bow : MonoBehaviour
     {
-        [SerializeField] private Arrow arrowPrefab;
-        [SerializeField] private Transform arrowPosition;
-        [SerializeField] private int magzineSize = 5;
-        [SerializeField] private int magzineMaxSize = 50;
-
         private IObjectPool<Arrow> _arrowPool;
         private Arrow _loadedArrow;
-       [SerializeField] private float forceAmount = 1;
+        [SerializeField] private Arrow arrowPrefab;
+        [SerializeField] private int magzineSize = 5;
+        private int _availableArrows;
+        [SerializeField] private int magzineMaxSize = 50;
+        public float forceAmount = 1;
+        [SerializeField] private GameObject bowBody;
+        private Tween _rotationTween;
 
-        private void Start()
+        public float rotationDuration = 2f;
+        public Vector3 startRotation = new Vector3(0f, 0f, 10f);
+        public Vector3 endRotation = new Vector3(0f, 0f, -45f);
+
+        public event Action OnRotate;
+        public event Action OnPauseRotate;
+        public event Action OnCharge;
+
+        public event Action OnShoot;
+        public event Action OnCheckArrow;
+        public event Action OnReloadArrow;
+
+        private void Awake()
         {
             _arrowPool = new ObjectPool<Arrow>(CreateArrow, ActionOnGetArrow, ActionOnReleaseBullet,
                 arrow => { Destroy(arrow.gameObject); }, false, magzineSize, magzineMaxSize);
-         //   GetArrow();
-            InputManager.Instance.OnRotate += GetArrow;
-            InputManager.Instance.OnShoot += ShootArrow;
+            _availableArrows = magzineSize;
+            GameManager.OnGameInit += HandleGameInit;
         }
-
 
         private void OnDestroy()
         {
-            InputManager.Instance.OnRotate -= GetArrow;
+            GameManager.OnGameInit -= HandleGameInit;
+        }
+
+        private void HandleGameInit()
+        {
+            GetArrow();
         }
 
         private Arrow CreateArrow()
@@ -36,14 +53,14 @@ namespace Archer.Character
             Arrow arrow = Instantiate(this.arrowPrefab);
             arrow.transform.SetParent(transform, false);
             arrow.rigidbody2D.gravityScale = 0;
-            //arrow.transform.localRotation = Quaternion.identity;
-
             return arrow;
         }
 
-        private void ActionOnGetArrow(Arrow obj)
+        private void ActionOnGetArrow(Arrow arrow)
         {
-            return;
+            Debug.Log("Get Arrow from pool");
+            _loadedArrow = arrow;
+            _loadedArrow.gameObject.SetActive(true);
         }
 
         private void ActionOnReleaseBullet(Arrow obj)
@@ -57,29 +74,100 @@ namespace Archer.Character
             {
                 Debug.Log("Get Arrow");
                 _loadedArrow = _arrowPool.Get();
-                _loadedArrow.gameObject.SetActive(true);
             }
         }
 
-        private void ShootArrow()
+        // event handlers
+        public void InvokeRotateEvent()
         {
-            // Activate the loaded arrow and set its position and rotation
-            //_loadedArrow.gameObject.SetActive(true);
-           // _loadedArrow.transform.position = arrowPosition.position;
-            //_loadedArrow.transform.rotation = arrowPosition.rotation;
+            StartRotationAnimation();
+            OnRotate?.Invoke();
+        }
 
-            // Get the rigidbody of the loaded arrow
-            
+        public void InvokeChargeEvent()
+        {
+            PauseBowRotation();
+            GameManager.Instance.CurrentGameState = GameState.BowShoot;
+            OnCharge?.Invoke();
+        }
+
+        public void InvokeShootEvent()
+        {
+            Debug.Log(" ForceAmount " + forceAmount);
+
             if (_loadedArrow.rigidbody2D != null)
             {
+                OnShoot?.Invoke();
+
                 _loadedArrow.rigidbody2D.gravityScale = 2.5f;
-                // Apply force to the arrow in the forward direction (you can adjust the force value)
                 _loadedArrow.rigidbody2D.AddForce(-_loadedArrow.transform.right * forceAmount, ForceMode2D.Impulse);
                 _loadedArrow.isShooting = true;
             }
-            // Release the arrow back to the pool
-            //_arrowPool.Release(_loadedArrow);
+
+            _availableArrows -= 1;
             _loadedArrow = null;
+            Debug.Log("Change state to CheckArrow");
+            //GameManager.Instance.CurrentGameState = GameState.CheckArrow;
+
+        }
+
+        public void InvokeCheckArrowEvent()
+        {
+            Debug.Log("Checking arrow count...  Arrow Count = " + _availableArrows);
+            if (_availableArrows == 0)
+            {
+                GameManager.Instance.ChangeGameState(GameState.Lose);
+                Debug.Log("Not arrow Left , Lost!");
+            }
+            else
+            {
+                Debug.Log("Change state to ReloadArrow");
+                GameManager.Instance.ChangeGameState(GameState.ReloadArrow);
+            }
+
+            OnCheckArrow?.Invoke();
+        }
+
+        public void InvokeReloadArrowEvent()
+        {
+            Debug.Log("ReloadArrow......!");
+            GetArrow();
+            GameManager.Instance.CurrentGameState = GameState.BowRotate;
+            OnReloadArrow?.Invoke();
+        }
+
+        private void StartRotationAnimation()
+        {
+            // Rotate the GameObject back and forth between start and end rotations in local space
+            _rotationTween = bowBody.transform.DOLocalRotate(endRotation, rotationDuration)
+                .SetEase(Ease.Linear)
+                .OnComplete(() =>
+                {
+                    // When the rotation is complete, reverse it to startRotation
+                    bowBody.transform.DOLocalRotate(startRotation, rotationDuration)
+                        .SetEase(Ease.Linear)
+                        .OnComplete(StartRotationAnimation); // Loop by starting animation again
+                });
+            GameManager.Instance.ChangeGameState(GameState.BowCharge);
+        }
+
+        public void PauseBowRotation()
+        {
+            if (_rotationTween != null && _rotationTween.IsActive())
+            {
+                Debug.Log("Pause Rotation");
+
+                bowBody.transform.DOPause();
+            }
+        }
+
+        public void ResumeRotation()
+        {
+            // Resume the paused rotation animation
+            if (_rotationTween != null && !_rotationTween.IsActive())
+            {
+                _rotationTween.Play();
+            }
         }
     }
 }
