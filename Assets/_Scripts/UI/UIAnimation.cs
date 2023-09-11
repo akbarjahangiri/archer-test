@@ -32,7 +32,6 @@ namespace Archer.UI
         {
             _rectTransform = GetComponent<RectTransform>();
             _image = GetComponent<Image>();
-            // Initialize button position and alpha based on animation type
             if (animationType == AnimationType.FadeIn)
             {
                 //_rectTransform.anchoredPosition = Vector2.zero;
@@ -44,8 +43,6 @@ namespace Archer.UI
 
                 _rectTransform.anchoredPosition  = startPosition;
 
-                // Move the button outside the screen
-                //_rectTransform.anchoredPosition = new Vector2(-Screen.width, _rectTransform.anchoredPosition.y);
             }
             else if (animationType == AnimationType.Scale)
             {
@@ -53,7 +50,6 @@ namespace Archer.UI
             }
         }
 
-        // Call this method to play the specified animation with a delay
         public void PlayAnimation()
         {
             if (animationType == AnimationType.FadeIn)
@@ -66,7 +62,6 @@ namespace Archer.UI
             {
                 Debug.Log("MoveFromOutside");
 
-                // Move from outside the screen to the specified position
                 _rectTransform
                     .DOAnchorPos(new Vector2(_endPosition.x, _endPosition.y),
                         animationDuration).SetEase(easeType).SetDelay(delayBeforeStart);

@@ -14,7 +14,6 @@ namespace Archer.UI
 
         [SerializeField] private UIAnimation[] _uiAnimations;
 
-        // Start is called before the first frame update
         void Start()
         {
             newGameButton.onClick.AddListener(OnNewGameClick);
@@ -27,10 +26,8 @@ namespace Archer.UI
             loadGameButton.onClick.RemoveListener(OnLoadGameClick);
         }
 
-        // This method is called to show the main menu UI
         public override void Show()
         {
-            // Implement logic to show the main menu UI
             gameObject.SetActive(true);
             // Play animations for each button
             foreach (var buttonAnimation in _uiAnimations)
@@ -39,10 +36,8 @@ namespace Archer.UI
             }
         }
 
-        // This method is called to hide the main menu UI
         public override void Hide()
         {
-            // Implement logic to hide the main menu UI
             gameObject.SetActive(false);
         }
 

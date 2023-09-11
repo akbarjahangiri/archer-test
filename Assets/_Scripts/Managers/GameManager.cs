@@ -133,12 +133,11 @@ namespace Archer.Managers
                     if (playerProgress.currentLevel <= levelDataArray.Length)
                     {
                         // Transition to the next level or handle level completion
-                        // Example: Transition to level playerProgress.currentLevel
+                       
                     }
                     else
                     {
                         // Player completed all levels
-                        // Handle game completion or victory state
                     }
                 }
 
