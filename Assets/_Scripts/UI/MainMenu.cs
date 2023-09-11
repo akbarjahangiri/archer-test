@@ -48,12 +48,13 @@ namespace Archer.UI
 
         public void OnNewGameClick()
         {
-            Debug.Log("OnNewGameClick");
             GameManager.Instance.StartNewGame();
         }
 
         public void OnLoadGameClick()
         {
+            GameManager.Instance.LoadGame();
+
             Debug.Log("OnLoadGameClick");
         }
     }

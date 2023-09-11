@@ -1,4 +1,6 @@
 using System;
+using _Scripts.StateMachine;
+using _Scripts.StateMachine.GameState;
 using UnityEngine;
 
 namespace Archer.Managers
@@ -9,6 +11,8 @@ namespace Archer.Managers
 
 
         private bool _canClick = false;
+        private bool _canChangeState = true;
+        private GameStateManager _gameStateManager;
 
         private void Awake()
         {
@@ -21,7 +25,7 @@ namespace Archer.Managers
                 Destroy(gameObject);
             }
 
-            GameManager.OnGameInit += HandleGameInit;
+            _gameStateManager = FindObjectOfType<GameStateManager>();
         }
 
         private void HandleGameInit()
@@ -47,21 +51,24 @@ namespace Archer.Managers
 
         private void InputChange()
         {
-            switch (GameManager.Instance.currentGameState)
+            if (_gameStateManager.currentState is IdleState && _canChangeState)
             {
-                case GameState.CharacterIdle:
-                    GameManager.Instance.ChangeGameState(GameState.BowRotate);
-                    break;
-                case GameState.BowRotate:
-                    GameManager.Instance.ChangeGameState(GameState.BowAim);
-                    break;
-                case GameState.BowChargeStart:
-                    GameManager.Instance.ChangeGameState(GameState.BowChargeEnd);
-                    break;
-                case GameState.Lose:
-                    _canClick = false;
-                    break;
+                _gameStateManager.SwitchState(_gameStateManager.RotateState);
+                _canChangeState = false;
             }
+
+            if (_gameStateManager.currentState is RotateState && _canChangeState)
+            {
+                _gameStateManager.SwitchState(_gameStateManager.BowPowerChargeState);
+                _canChangeState = false;
+            }
+            if (_gameStateManager.currentState is BowPowerChargeState && _canChangeState)
+            {
+                _gameStateManager.SwitchState(_gameStateManager.ShootState);
+                _canChangeState = false;
+            }
+
+            _canChangeState = true;
         }
     }
 }

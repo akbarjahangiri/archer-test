@@ -17,8 +17,6 @@ namespace Archer.Managers
 
         private void Awake()
         {
-            GameManager.OnGameStageChanged += HandleStageChanged;
-            GameManager.OnGameInit += HandleGameInit;
 
             GameObject bowGameObject = GameObject.FindWithTag("Bow");
             if (bowGameObject != null)
@@ -31,39 +29,12 @@ namespace Archer.Managers
             }
         }
 
-        private void HandleStageChanged(GameState state)
-        {
-            switch (state)
-            {
-                case GameState.CharacterIdle:
-                    HandleICharacterIdle();
-                    break;
-                case GameState.BowChargeStart:
-                    HandleBowChargeStart();
-                    break;
-                case GameState.BowChargeEnd:
-                    HandleBowChargeEnd();
-                    break;
-                case GameState.BowShoot:
-                    HandeShootArrow();
-                    break;
-                case GameState.CheckArrow:
-                    break;
-                case GameState.ReloadArrow:
-                    break;
-                case GameState.Victory:
-                    break;
-                case GameState.Lose:
-                    HandeLose();
-                    break;
-            }
-        }
 
 
         private void OnDestroy()
         {
             GameManager.OnGameInit -= HandleGameInit;
-            GameManager.OnGameStageChanged -= HandleStageChanged;
+            // GameManager.OnGameStageChanged -= HandleStageChanged;
         }
 
         private void HandleGameInit()
@@ -71,46 +42,27 @@ namespace Archer.Managers
             // init 
         }
 
-        private void HandleICharacterIdle()
+        public void HandleIdleState()
         {
             powerSlider.value = 0;
         }
 
 
-        private void HandleBowChargeStart()
+        public void HandleBowPowerChargeStart()
         {
-            _powerChargeTween = powerSlider.DOValue(maxValue, powerChargeDuration).SetEase(Ease.Linear).OnComplete(
-                () =>
-                {
-                    powerSlider.DOValue(minValue, powerChargeDuration)
-                        .SetEase(Ease.Linear)
-                        .OnComplete(HandleBowChargeStart);
-                });
+            _powerChargeTween = powerSlider.DOValue(maxValue, powerChargeDuration).SetEase(Ease.Linear)
+                .SetLoops(-1, LoopType.Yoyo);
         }
 
-        private void HandleBowChargeEnd()
+        public void HandleBowPowerChargeEnd()
         {
+            
             if (_powerChargeTween != null)
             {
-                _powerChargeTween.Pause();
                 _powerChargeTween.Kill();
                 bow.forceAmount = powerSlider.value;
-                GameManager.Instance.ChangeGameState(GameState.BowShoot);
             }
         }
-
-        public void HandeShootArrow()
-        {
-         
-        }
-
-        private void HandeLose()
-        {
-            if (_powerChargeTween != null)
-            {
-                _powerChargeTween.Pause();
-                _powerChargeTween.Kill();
-            }
-        }
+  
     }
 }
