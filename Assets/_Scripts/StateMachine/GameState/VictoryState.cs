@@ -7,8 +7,9 @@ namespace _Scripts.StateMachine.GameState
         public override void EnterState(GameStateManager context)
         {
             // check if it was last level or not
-           
-            
+            context.GameManager.HandleGameVictory();
+
+
         }
 
         public override void UpdateState(GameStateManager context)

@@ -1,4 +1,6 @@
-﻿namespace _Scripts.StateMachine.GameState
+﻿using UnityEngine;
+
+namespace _Scripts.StateMachine.GameState
 {
     public class NextLevelState:GameBaseState
     {

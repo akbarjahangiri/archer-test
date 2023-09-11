@@ -7,7 +7,6 @@ namespace _Scripts.StateMachine.GameState
     {
         public override void EnterState(GameStateManager context)
         {
-            Debug.Log("Bow Rotate State");
             context.bow.StartRotationAnimation();
         }
 
@@ -17,7 +16,6 @@ namespace _Scripts.StateMachine.GameState
 
         public override void EndState(GameStateManager context)
         {
-            Debug.Log("Bow Rotate State End");
             context.bow.StopBowRotation();
         }
     }

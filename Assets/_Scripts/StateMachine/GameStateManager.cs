@@ -25,7 +25,7 @@ namespace _Scripts.StateMachine
         public GameManager GameManager;
         private void Start()
         {
-            Debug.Log("Start gameStateManager");
+            GameManager = FindObjectOfType<GameManager>();
             currentState = IdleState;
             currentState.EnterState(this);
         }
@@ -37,6 +37,7 @@ namespace _Scripts.StateMachine
 
         public void SwitchState(GameBaseState state)
         {
+            Debug.Log($"{currentState} =>{state}");
             currentState.EndState(this);
             currentState = state;
             state.EnterState(this);

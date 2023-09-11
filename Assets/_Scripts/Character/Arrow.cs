@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -24,13 +25,13 @@ public class Arrow : MonoBehaviour
         transform.rotation = Quaternion.AngleAxis(_angle, Vector3.forward);
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnCollisionEnter2D(Collision2D other)
     {
-
         if (other.gameObject.tag == "Target")
         {
             transform.SetParent(null);
             rigidbody2D.simulated = false;
+            isShooting = false;
         }
     }
 }

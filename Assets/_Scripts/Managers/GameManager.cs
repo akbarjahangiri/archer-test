@@ -1,25 +1,23 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Debug = UnityEngine.Debug;
 
 namespace Archer.Managers
 {
     public class GameManager : MonoBehaviour
     {
         public static GameManager Instance { get; private set; }
+        [SerializeField] private HudManager _hudManager;
         public LevelData[] levelDataArray;
         private LevelData currentLevelData;
+        public int currentLevelDataNumber;
         private PlayerProgress playerProgress;
-        public int playerLevelScore;
-
-
+        private PlayerScore playerScore; // Updated to PlayerScore
+        private int _playerLevelScore = 0;
         private const string MainMenuScene = "MainMenu";
-
         private const string GameplayScene = "Gameplay";
-
         public static event Action OnGameInit;
         public event Action OnNewGame;
 
@@ -33,9 +31,26 @@ namespace Archer.Managers
             else
             {
                 Destroy(gameObject);
+                return;
             }
+
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name == GameplayScene)
+            {
+                _hudManager = FindObjectOfType<HudManager>();
+                _hudManager.UpdateLevelInfo(currentLevelData.levelNumber.ToString(),
+                    currentLevelData.requiredScore.ToString());
+
+                if (_hudManager == null)
+                {
+                    Debug.LogError("HudManager not found in the Gameplay scene.");
+                }
+            }
+        }
 
         public void LoadMainMenu()
         {
@@ -47,36 +62,64 @@ namespace Archer.Managers
             SceneManager.LoadScene(GameplayScene);
         }
 
-        private void LoadPlayerProgress()
+        public void StartNewGame()
         {
-            string filePath = Application.persistentDataPath + "/playerProgress.json";
-            if (File.Exists(filePath))
+            currentLevelData = levelDataArray[0];
+            playerProgress = new PlayerProgress();
+            currentLevelDataNumber = levelDataArray[0].levelNumber;
+            playerProgress.currentLevel = 1;
+            LoadGameplay();
+        }
+
+        public void LoadGame()
+        {
+            LoadPlayerProgressFromJSON();
+        }
+
+        public void HandleGameVictory()
+        {
+            SavePlayerProgress();
+        }
+
+        public void ExitLevel()
+        {
+            LoadMainMenu();
+        }
+
+        public void AddScore(int score)
+        {
+            _playerLevelScore += score;
+            playerProgress.score += _playerLevelScore;
+            _hudManager.UpdateScore(_playerLevelScore.ToString());
+        }
+
+        #region StateHandles
+
+        public bool CheckLastLevel()
+        {
+            if (currentLevelData.levelNumber == levelDataArray.Length)
             {
-                string json = File.ReadAllText(filePath);
-                playerProgress = JsonUtility.FromJson<PlayerProgress>(json);
+                return true;
+            }
+
+            return false;
+        }
+
+        public void LoadNextLevel()
+        {
+            SavePlayerProgress();
+            int nextLevelNumber = currentLevelData.levelNumber + 1;
+
+            if (nextLevelNumber >= 1 && nextLevelNumber <= levelDataArray.Length)
+            {
+                currentLevelData = levelDataArray[nextLevelNumber - 1];
+                playerProgress.currentLevel = currentLevelData.levelNumber;
+                LoadGameplay();
             }
             else
             {
-                playerProgress = new PlayerProgress();
-                SavePlayerProgress();
+                Debug.LogError("Invalid next level number.");
             }
-        }
-
-        public void SavePlayerProgress()
-        {
-            string json = JsonUtility.ToJson(playerProgress);
-            string filePath = Application.persistentDataPath + "/playerProgress.json";
-            File.WriteAllText(filePath, json);
-        }
-
-        public int GetRequiredScoreForLevel(int levelNumber)
-        {
-            if (levelNumber >= 1 && levelNumber <= levelDataArray.Length)
-            {
-                return levelDataArray[levelNumber - 1].requiredScore;
-            }
-
-            return 0;
         }
 
         public void CompleteLevel(int levelNumber, int score)
@@ -103,9 +146,45 @@ namespace Archer.Managers
             }
         }
 
+        #endregion
+
+        #region PlayerProgress
+
+        private void LoadPlayerProgress()
+        {
+            string filePath = Application.dataPath + Path.AltDirectorySeparatorChar + "/playerProgress.json";
+            if (File.Exists(filePath))
+            {
+                string json = File.ReadAllText(filePath);
+                playerProgress = JsonUtility.FromJson<PlayerProgress>(json);
+            }
+            else
+            {
+                playerProgress = new PlayerProgress();
+                SavePlayerProgress();
+            }
+        }
+
+        public void SavePlayerProgress()
+        {
+            Debug.Log("Save Progress");
+            string json = JsonUtility.ToJson(playerProgress);
+            string filePath = Application.dataPath + Path.AltDirectorySeparatorChar + "/playerProgress.json";
+            File.WriteAllText(filePath, json);
+        }
+
+        public int GetRequiredScoreForLevel(int levelNumber)
+        {
+            if (levelNumber >= 1 && levelNumber <= levelDataArray.Length)
+            {
+                return levelDataArray[levelNumber - 1].requiredScore;
+            }
+
+            return 0;
+        }
+
         public void LoadPlayerProgressFromJSON()
         {
-            // Load player progress from a JSON file
             string filePath = Application.persistentDataPath + "/playerProgress.json";
             if (File.Exists(filePath))
             {
@@ -118,25 +197,9 @@ namespace Archer.Managers
             }
         }
 
-
-        public void StartNewGame()
-        {
-            currentLevelData = levelDataArray[0];
-            playerProgress = new PlayerProgress();
-            playerProgress.currentLevel = 1;
-            Debug.Log(playerProgress);
-            LoadGameplay();
-        }
-
-        public void LoadGame()
-        {
-            LoadPlayerProgressFromJSON();
-        }
-
-
         public bool CheckPlayerProgress()
         {
-            if (playerLevelScore >= currentLevelData.requiredScore)
+            if (_playerLevelScore >= currentLevelData.requiredScore)
             {
                 return true;
             }
@@ -144,35 +207,48 @@ namespace Archer.Managers
             return false;
         }
 
-        // Check if this is the level of the game
-        public bool CheckLastLevel()
-        {
-            if (currentLevelData.levelNumber == levelDataArray.Length)
-            {
-                return true;
-            }
+        #endregion
 
-            return false;
+        #region PlayerScore
+
+        public void AddPlayerScore(string playerName, int score)
+        {
+            PlayerScoreEntry newScore = new PlayerScoreEntry
+            {
+                name = playerName,
+                score = score
+            };
+            playerScore.scores.Add(newScore);
+            SavePlayerScores();
         }
 
-        public void LoadNextLevel()
+        private void SavePlayerScores()
         {
-            // Get the next level number
-            int nextLevelNumber = currentLevelData.levelNumber + 1;
+            string filePath = Application.persistentDataPath + "/playerScores.json";
+            string json = JsonUtility.ToJson(playerScore);
+            File.WriteAllText(filePath, json);
+        }
 
-            // Check if the next level number is valid
-            if (nextLevelNumber >= 1 && nextLevelNumber <= levelDataArray.Length)
+        public List<PlayerScoreEntry> GetPlayerScores()
+        {
+            return playerScore.scores;
+        }
+
+        private void LoadPlayerScores()
+        {
+            string filePath = Application.persistentDataPath + "/playerScores.json";
+            if (File.Exists(filePath))
             {
-                // Set the current level data to the next level data
-                currentLevelData = levelDataArray[nextLevelNumber - 1];
-
-                // Load the next level scene
-                LoadGameplay();
+                string json = File.ReadAllText(filePath);
+                playerScore = JsonUtility.FromJson<PlayerScore>(json);
             }
             else
             {
-                Debug.LogError("Invalid next level number.");
+                playerScore = new PlayerScore();
+                SavePlayerScores();
             }
         }
+
+        #endregion
     }
 }

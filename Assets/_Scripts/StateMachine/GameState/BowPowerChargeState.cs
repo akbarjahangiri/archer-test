@@ -7,7 +7,6 @@ namespace _Scripts.StateMachine.GameState
     {
         public override void EnterState(GameStateManager context)
         {
-            Debug.Log("Bow Rotate State");
 
             context.HudManager.HandleBowPowerChargeStart();
         }

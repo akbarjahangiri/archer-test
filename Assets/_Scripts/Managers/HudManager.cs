@@ -1,5 +1,7 @@
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Archer.Managers
@@ -10,6 +12,11 @@ namespace Archer.Managers
         [SerializeField] private float powerChargeDuration;
         [SerializeField] private float minValue = 0f;
         [SerializeField] private float maxValue = 1f;
+        [SerializeField] private TextMeshProUGUI levelNumber;
+        [SerializeField] private TextMeshProUGUI minScore;
+        [SerializeField] private TextMeshProUGUI playerScore;
+        [SerializeField] private Button exitLevelButton;
+
 
         private Tween _powerChargeTween;
 
@@ -27,10 +34,10 @@ namespace Archer.Managers
             {
                 Debug.LogError("Bow GameObject not found.");
             }
+            exitLevelButton.onClick.AddListener(GameManager.Instance.ExitLevel);
         }
 
-
-
+        
         private void OnDestroy()
         {
             GameManager.OnGameInit -= HandleGameInit;
@@ -62,6 +69,18 @@ namespace Archer.Managers
                 _powerChargeTween.Kill();
                 bow.forceAmount = powerSlider.value;
             }
+        }
+
+        public void UpdateScore(string score)
+        {
+            playerScore.text = score;
+        }
+
+        public void UpdateLevelInfo(string levelNumber,string minScore)
+        {
+            Debug.Log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+            this.levelNumber.text = levelNumber;
+            this.minScore.text = minScore;
         }
   
     }
