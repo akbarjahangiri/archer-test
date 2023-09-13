@@ -42,14 +42,18 @@ namespace Archer.Managers
             if (scene.name == GameplayScene)
             {
                 _hudManager = FindObjectOfType<HudManager>();
-                _hudManager.UpdateLevelInfo(currentLevelData.levelNumber.ToString(),
-                    currentLevelData.requiredScore.ToString());
+                _hudManager.UpdateLevelInfo(currentLevelData,_playerLevelScore);
 
                 if (_hudManager == null)
                 {
                     Debug.LogError("HudManager not found in the Gameplay scene.");
                 }
             }
+        }
+
+        public int GetCurrentLevelNumber()
+        {
+            return currentLevelData.levelNumber;
         }
 
         public void LoadMainMenu()
@@ -133,7 +137,6 @@ namespace Archer.Managers
                     if (playerProgress.currentLevel <= levelDataArray.Length)
                     {
                         // Transition to the next level or handle level completion
-                       
                     }
                     else
                     {
