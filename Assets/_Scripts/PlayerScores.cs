@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 [System.Serializable]
-public class PlayerScore
+public class PlayerScores
 {
     public List<PlayerScoreEntry> scores = new List<PlayerScoreEntry>();
 }

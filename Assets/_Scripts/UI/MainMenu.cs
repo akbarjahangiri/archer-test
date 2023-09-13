@@ -1,5 +1,5 @@
 using Archer.Managers;
-using Archer.Managers;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,11 +13,14 @@ namespace Archer.UI
         [SerializeField] private Button loadGameButton;
 
         [SerializeField] private UIAnimation[] _uiAnimations;
+        [SerializeField] private RectTransform scorePrefab;
+        [SerializeField] private RectTransform scoresParent;
 
         void Start()
         {
             newGameButton.onClick.AddListener(OnNewGameClick);
             loadGameButton.onClick.AddListener(OnLoadGameClick);
+            InitMainMenu();
         }
 
         void OnDestroy()
@@ -51,6 +54,40 @@ namespace Archer.UI
             GameManager.Instance.LoadGame();
 
             Debug.Log("OnLoadGameClick");
+        }
+
+        private void InitMainMenu()
+        {
+            if (GameManager.Instance.CheckPlayerSave())
+            {
+                loadGameButton.interactable = false;
+            }
+            else
+            {
+                loadGameButton.interactable = true;
+            }
+
+            if (GameManager.Instance.LoadPlayerScores() != null)
+            {
+                LoadScoreboard(GameManager.Instance.LoadPlayerScores());
+            }
+        }
+
+        private void LoadScoreboard(PlayerScores playerscores)
+        {
+            /*foreach (RectTransform child in scoresParent)
+            {
+                Destroy(child.gameObject);
+            }*/
+
+            foreach (var playerScoreEntry in playerscores.scores)
+            {
+                RectTransform scoreItem = Instantiate(scorePrefab, scoresParent);
+                scoreItem.transform.Find("NameText").GetComponent<TextMeshProUGUI>().text =
+                    $"{playerScoreEntry.name}";
+                scoreItem.transform.Find("ScoreText").GetComponent<TextMeshProUGUI>().text =
+                    $"{playerScoreEntry.score}";
+            }
         }
     }
 }

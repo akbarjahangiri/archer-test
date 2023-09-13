@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Archer.Managers;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Serialization;
 
 namespace Archer.Managers
 {
@@ -12,28 +14,33 @@ namespace Archer.Managers
         private Arrow _loadedArrow;
         [SerializeField] private Arrow arrowPrefab;
         [SerializeField] private int quiverSize = 5;
-        private int _availableQuiverArrows;
+         public int availableQuiverArrows;
         [SerializeField] private int quiverMaxSize = 50;
         public float forceAmount = 100;
         [SerializeField] private GameObject bowBody;
-        private Tween _rotationTween;
+        private Tween _rotationTweenBot;
+        private Sequence _rotationSequence;
 
-        public float rotationDuration = 2f;
+        public float rotationDuration = 1f;
         public Vector3 endRotation = new Vector3(0f, 0f, -45f);
+        public Vector3 startRotation = new Vector3(0f, 0f, 10f);
         public Quaternion _idleRotation;
+        [SerializeField] private List<GameObject> arrows;
 
 
         private void Awake()
         {
             _arrowPool = new ObjectPool<Arrow>(CreateArrow, ActionOnGetArrow, ActionOnReleaseBullet,
                 arrow => { Destroy(arrow.gameObject); }, false, quiverSize, quiverMaxSize);
-            _availableQuiverArrows = quiverSize;
+            availableQuiverArrows = quiverSize;
             _idleRotation = bowBody.transform.rotation;
         }
+
         private void HandleGameInit()
         {
             GetArrow();
         }
+
         private Arrow CreateArrow()
         {
             Arrow arrow = Instantiate(this.arrowPrefab);
@@ -67,13 +74,16 @@ namespace Archer.Managers
                 _loadedArrow.isShooting = true;
             }
 
-            _availableQuiverArrows -= 1;
+            availableQuiverArrows -= 1;
+            var lastGameObject = arrows[arrows.Count - 1];
+            lastGameObject.SetActive(false);
+            arrows.RemoveAt(arrows.Count - 1);
             _loadedArrow = null;
         }
 
         public bool HandleCheckArrow()
         {
-            if (_availableQuiverArrows == 0)
+            if (availableQuiverArrows == 0)
             {
                 return false;
             }
@@ -90,17 +100,28 @@ namespace Archer.Managers
 
         public void StartRotationAnimation()
         {
-            _rotationTween = bowBody.transform.DOLocalRotate(endRotation, rotationDuration)
-                .SetEase(Ease.Linear)
-                .SetLoops(-1, LoopType.Yoyo);
+            _rotationSequence = DOTween.Sequence();
+
+            _rotationSequence.Append(bowBody.transform.DOLocalRotate(endRotation, rotationDuration)
+                .SetEase(Ease.Linear));
+
+            _rotationSequence.Append(bowBody.transform.DOLocalRotate(startRotation, rotationDuration)
+                .SetEase(Ease.Linear));
+
+            _rotationSequence.SetLoops(-1, LoopType.Yoyo);
+
+            _rotationSequence.Play();
         }
 
         public void StopBowRotation()
         {
-            if (_rotationTween != null && _rotationTween.IsActive())
+            _rotationSequence.Kill();
+
+            /*if (_rotationTweenUp != null && _rotationTweenUp.IsActive())
             {
-                _rotationTween.Kill();
-            }
+                Debug.Log("killing rotation");
+                _rotationTweenUp.Kill();
+            }*/
         }
 
 

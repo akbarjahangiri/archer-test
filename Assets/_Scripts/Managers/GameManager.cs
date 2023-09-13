@@ -14,16 +14,18 @@ namespace Archer.Managers
         private LevelData currentLevelData;
         public int currentLevelDataNumber;
         private PlayerProgress playerProgress;
-        private PlayerScore playerScore;
+        private PlayerScores _playerScores;
         private static string savePath;
+        private static string scoreSavePath;
 
         private int _playerOverallLevelScore = 0;
         private int _playerCurrentLevelScore = 0;
-        
+
         private const string MainMenuScene = "MainMenu";
         private const string GameplayScene = "Gameplay";
+
         public static event Action OnGameInit;
-        public event Action OnNewGame;
+        // public event Action OnNewGame;
 
         private void Awake()
         {
@@ -39,6 +41,7 @@ namespace Archer.Managers
             }
 
             savePath = Application.dataPath + Path.AltDirectorySeparatorChar + "/playerProgress.json";
+            scoreSavePath = Application.dataPath + Path.AltDirectorySeparatorChar + "/playerScores.json";
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
@@ -88,7 +91,8 @@ namespace Archer.Managers
 
         public void HandleGameVictory()
         {
-            SavePlayerProgress();
+            _hudManager.ShowVictoryPanel();
+            //SavePlayerProgress();
         }
 
         public void ExitLevel()
@@ -100,7 +104,7 @@ namespace Archer.Managers
         {
             _playerOverallLevelScore += score;
             _playerCurrentLevelScore += score;
-            
+
             _hudManager.UpdateScore(_playerOverallLevelScore.ToString());
         }
 
@@ -127,7 +131,7 @@ namespace Archer.Managers
             {
                 currentLevelData = levelDataArray[nextLevelNumber - 1];
                 playerProgress.currentLevel = currentLevelData.levelNumber;
-                
+
                 LoadGameplay();
             }
             else
@@ -136,26 +140,14 @@ namespace Archer.Managers
             }
         }
 
-        public void CompleteLevel(int levelNumber, int score)
+        public bool CheckPlayerSave()
         {
-            if (levelNumber == playerProgress.currentLevel)
+            if (IsJsonFileEmpty(savePath))
             {
-                playerProgress.score = score;
-                if (score >= GetRequiredScoreForLevel(levelNumber))
-                {
-                    playerProgress.currentLevel++;
-                    if (playerProgress.currentLevel <= levelDataArray.Length)
-                    {
-                        // Transition to the next level or handle level completion
-                    }
-                    else
-                    {
-                        // Player completed all levels
-                    }
-                }
-
-                SavePlayerProgress();
+                return true;
             }
+
+            return false;
         }
 
         #endregion
@@ -213,44 +205,76 @@ namespace Archer.Managers
 
         #region PlayerScore
 
-        public void AddPlayerScore(string playerName, int score)
+        public void AddPlayerScore(string playerName)
         {
+            _playerScores = LoadPlayerScores();
             PlayerScoreEntry newScore = new PlayerScoreEntry
             {
                 name = playerName,
-                score = score
+                score = playerProgress.score
             };
-            playerScore.scores.Add(newScore);
+            Debug.Log("Player Name: " + playerName);
+            Debug.Log("score: " + playerProgress.score);
+            _playerScores.scores.Add(newScore);
             SavePlayerScores();
         }
 
         private void SavePlayerScores()
         {
-            string filePath = Application.persistentDataPath + "/playerScores.json";
-            string json = JsonUtility.ToJson(playerScore);
-            File.WriteAllText(filePath, json);
+            string json = JsonUtility.ToJson(_playerScores);
+            File.WriteAllText(scoreSavePath, json);
+            // Clear PlayerProgres 
+            ClearJsonFile(savePath);
         }
 
         public List<PlayerScoreEntry> GetPlayerScores()
         {
-            return playerScore.scores;
+            return _playerScores.scores;
         }
 
-        private void LoadPlayerScores()
+        public PlayerScores LoadPlayerScores()
         {
-            string filePath = Application.persistentDataPath + "/playerScores.json";
-            if (File.Exists(filePath))
+            if (File.Exists(scoreSavePath))
             {
-                string json = File.ReadAllText(filePath);
-                playerScore = JsonUtility.FromJson<PlayerScore>(json);
+                string json = File.ReadAllText(scoreSavePath);
+                var playerScores = JsonUtility.FromJson<PlayerScores>(json);
+                return playerScores;
             }
             else
             {
-                playerScore = new PlayerScore();
-                SavePlayerScores();
+                var playerScores = new PlayerScores();
+                return playerScores;
+
+                //  SavePlayerScores();
             }
         }
 
         #endregion
+
+        public void ClearJsonFile(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+                Debug.Log("JSON file cleared successfully.");
+            }
+            else
+            {
+                Debug.LogWarning("JSON file not found. Nothing to clear.");
+            }
+        }
+
+        public bool IsJsonFileEmpty(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                string json = File.ReadAllText(filePath);
+                return string.IsNullOrEmpty(json) || json.Trim() == "{}";
+            }
+            else
+            {
+                return true;
+            }
+        }
     }
 }

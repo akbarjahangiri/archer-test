@@ -9,7 +9,9 @@ namespace _Scripts.StateMachine.GameState
 
         public override void EnterState(GameStateManager context)
         {
+            
             context.bow.HandleShootState();
+            context.HudManager.RemoveArrow(context.bow.availableQuiverArrows.ToString());
         }
 
         public override void UpdateState(GameStateManager context)

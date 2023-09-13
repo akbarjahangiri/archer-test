@@ -19,8 +19,9 @@ namespace Archer.Managers
         [SerializeField] private Button exitLevelButton;
         [SerializeField] private RectTransform loadingNextLevelImage;
         [SerializeField] private RectTransform victoryPanel;
+        [SerializeField] private TextMeshProUGUI arrowCount;
         [SerializeField] private TextMeshProUGUI victoryScore;
-        [SerializeField] private InputField victoryPlayerName;
+        [SerializeField] private GameObject victoryPlayerName;
         [SerializeField] private Button saveVictoryResultButton;
         private Sequence _sequence;
 
@@ -83,7 +84,7 @@ namespace Archer.Managers
             playerScore.text = score;
         }
 
-        public void UpdateLevelInfo(LevelData currentLevelData,PlayerProgress playerProgress)
+        public void UpdateLevelInfo(LevelData currentLevelData, PlayerProgress playerProgress)
         {
             levelNumber.text = playerProgress.currentLevel.ToString();
             minScore.text = currentLevelData.requiredScore.ToString();
@@ -140,9 +141,20 @@ namespace Archer.Managers
             }
         }
 
+        public void ShowVictoryPanel()
+        {
+            victoryPanel.gameObject.SetActive(true);
+        }
+
         private void SaveVictoryScore()
         {
-            
+            GameManager.Instance.AddPlayerScore(victoryPlayerName.GetComponent<TMP_InputField>().text);
+            GameManager.Instance.LoadMainMenu();
+        }
+
+        public void RemoveArrow(string remainArrows)
+        {
+            arrowCount.text = "x" + remainArrows;
         }
     }
 }
