@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -10,6 +9,7 @@ public class Arrow : MonoBehaviour
     public bool isShooting;
 
     private float _angle;
+    public ParticleSystem sparkParticle;
 
     void FixedUpdate()
     {
@@ -32,6 +32,8 @@ public class Arrow : MonoBehaviour
             transform.SetParent(null);
             rigidbody2D.simulated = false;
             isShooting = false;
+            sparkParticle.gameObject.SetActive(false);
+
         }
     }
 }

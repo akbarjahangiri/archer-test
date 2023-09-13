@@ -16,6 +16,7 @@ public class Target : MonoBehaviour
         if (other.gameObject.tag == "Arrow")
         {
             _gameManager.AddScore(score);
+            
         }
     }
 }

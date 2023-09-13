@@ -18,6 +18,10 @@ namespace Archer.Managers
         [SerializeField] private TextMeshProUGUI playerScore;
         [SerializeField] private Button exitLevelButton;
         [SerializeField] private RectTransform loadingNextLevelImage;
+        [SerializeField] private RectTransform victoryPanel;
+        [SerializeField] private TextMeshProUGUI victoryScore;
+        [SerializeField] private InputField victoryPlayerName;
+        [SerializeField] private Button saveVictoryResultButton;
         private Sequence _sequence;
 
 
@@ -38,12 +42,14 @@ namespace Archer.Managers
             }
 
             exitLevelButton.onClick.AddListener(GameManager.Instance.ExitLevel);
+            saveVictoryResultButton.onClick.AddListener(SaveVictoryScore);
         }
 
 
         private void OnDestroy()
         {
             exitLevelButton.onClick.RemoveListener(GameManager.Instance.ExitLevel);
+            saveVictoryResultButton.onClick.RemoveListener(SaveVictoryScore);
         }
 
         private void HandleGameInit()
@@ -77,11 +83,11 @@ namespace Archer.Managers
             playerScore.text = score;
         }
 
-        public void UpdateLevelInfo(LevelData currentLevelData,int currentScore = 0)
+        public void UpdateLevelInfo(LevelData currentLevelData,PlayerProgress playerProgress)
         {
-            levelNumber.text = currentLevelData.levelNumber.ToString();
+            levelNumber.text = playerProgress.currentLevel.ToString();
             minScore.text = currentLevelData.requiredScore.ToString();
-            playerScore.text = currentScore.ToString();
+            playerScore.text = playerProgress.score.ToString();
         }
 
         public void StartloadingNextLevelEffect()
@@ -132,6 +138,11 @@ namespace Archer.Managers
                 loadingNextLevelImage.transform.rotation = new Quaternion(0, 0, 0, 0);
                 nextLevelNumber.gameObject.SetActive(false);
             }
+        }
+
+        private void SaveVictoryScore()
+        {
+            
         }
     }
 }

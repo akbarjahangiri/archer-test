@@ -62,6 +62,7 @@ namespace Archer.Managers
             if (_loadedArrow.rigidbody2D != null)
             {
                 _loadedArrow.rigidbody2D.gravityScale = 2.5f;
+                _loadedArrow.sparkParticle.gameObject.SetActive(true);
                 _loadedArrow.rigidbody2D.AddForce(-_loadedArrow.transform.right * forceAmount, ForceMode2D.Impulse);
                 _loadedArrow.isShooting = true;
             }

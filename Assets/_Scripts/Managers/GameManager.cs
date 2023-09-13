@@ -14,8 +14,12 @@ namespace Archer.Managers
         private LevelData currentLevelData;
         public int currentLevelDataNumber;
         private PlayerProgress playerProgress;
-        private PlayerScore playerScore; // Updated to PlayerScore
-        private int _playerLevelScore = 0;
+        private PlayerScore playerScore;
+        private static string savePath;
+
+        private int _playerOverallLevelScore = 0;
+        private int _playerCurrentLevelScore = 0;
+        
         private const string MainMenuScene = "MainMenu";
         private const string GameplayScene = "Gameplay";
         public static event Action OnGameInit;
@@ -34,6 +38,7 @@ namespace Archer.Managers
                 return;
             }
 
+            savePath = Application.dataPath + Path.AltDirectorySeparatorChar + "/playerProgress.json";
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
@@ -42,8 +47,8 @@ namespace Archer.Managers
             if (scene.name == GameplayScene)
             {
                 _hudManager = FindObjectOfType<HudManager>();
-                _hudManager.UpdateLevelInfo(currentLevelData,_playerLevelScore);
-
+                _hudManager.UpdateLevelInfo(currentLevelData, playerProgress);
+                _playerCurrentLevelScore = 0;
                 if (_hudManager == null)
                 {
                     Debug.LogError("HudManager not found in the Gameplay scene.");
@@ -78,6 +83,7 @@ namespace Archer.Managers
         public void LoadGame()
         {
             LoadPlayerProgressFromJSON();
+            LoadGameplay();
         }
 
         public void HandleGameVictory()
@@ -92,9 +98,10 @@ namespace Archer.Managers
 
         public void AddScore(int score)
         {
-            _playerLevelScore += score;
-            playerProgress.score += _playerLevelScore;
-            _hudManager.UpdateScore(_playerLevelScore.ToString());
+            _playerOverallLevelScore += score;
+            _playerCurrentLevelScore += score;
+            
+            _hudManager.UpdateScore(_playerOverallLevelScore.ToString());
         }
 
         #region StateHandles
@@ -111,13 +118,16 @@ namespace Archer.Managers
 
         public void LoadNextLevel()
         {
-            SavePlayerProgress();
             int nextLevelNumber = currentLevelData.levelNumber + 1;
+            playerProgress.score = _playerOverallLevelScore;
+            playerProgress.currentLevel = nextLevelNumber;
+            SavePlayerProgress();
 
             if (nextLevelNumber >= 1 && nextLevelNumber <= levelDataArray.Length)
             {
                 currentLevelData = levelDataArray[nextLevelNumber - 1];
                 playerProgress.currentLevel = currentLevelData.levelNumber;
+                
                 LoadGameplay();
             }
             else
@@ -152,27 +162,17 @@ namespace Archer.Managers
 
         #region PlayerProgress
 
-        private void LoadPlayerProgress()
-        {
-            string filePath = Application.dataPath + Path.AltDirectorySeparatorChar + "/playerProgress.json";
-            if (File.Exists(filePath))
-            {
-                string json = File.ReadAllText(filePath);
-                playerProgress = JsonUtility.FromJson<PlayerProgress>(json);
-            }
-            else
-            {
-                playerProgress = new PlayerProgress();
-                SavePlayerProgress();
-            }
-        }
-
         public void SavePlayerProgress()
         {
-            Debug.Log("Save Progress");
             string json = JsonUtility.ToJson(playerProgress);
-            string filePath = Application.dataPath + Path.AltDirectorySeparatorChar + "/playerProgress.json";
-            File.WriteAllText(filePath, json);
+            string directory = Path.GetDirectoryName(savePath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllText(savePath, json);
+            Debug.Log("Save Progress");
         }
 
         public int GetRequiredScoreForLevel(int levelNumber)
@@ -187,11 +187,11 @@ namespace Archer.Managers
 
         public void LoadPlayerProgressFromJSON()
         {
-            string filePath = Application.persistentDataPath + "/playerProgress.json";
-            if (File.Exists(filePath))
+            if (File.Exists(savePath))
             {
-                string json = File.ReadAllText(filePath);
+                string json = File.ReadAllText(savePath);
                 playerProgress = JsonUtility.FromJson<PlayerProgress>(json);
+                currentLevelData = levelDataArray[playerProgress.currentLevel - 1];
             }
             else
             {
@@ -201,7 +201,7 @@ namespace Archer.Managers
 
         public bool CheckPlayerProgress()
         {
-            if (_playerLevelScore >= currentLevelData.requiredScore)
+            if (_playerCurrentLevelScore >= currentLevelData.requiredScore)
             {
                 return true;
             }

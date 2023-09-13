@@ -14,9 +14,11 @@ namespace Archer.UI
         [SerializeField] private Vector3 startPosition;
         [SerializeField] private Vector3 _endPosition;
         [SerializeField] private Vector3 startScale = Vector3.one;
-
         [SerializeField] private Vector3 endScale = Vector3.one;
         [SerializeField] private Ease easeType = Ease.Linear;
+        [SerializeField] private bool loop = false;
+        [SerializeField] private bool playOnAwake = false;
+
 
         private RectTransform _rectTransform;
         private Image _image;
@@ -41,12 +43,16 @@ namespace Archer.UI
             {
                 _endPosition = _rectTransform.localPosition;
 
-                _rectTransform.anchoredPosition  = startPosition;
-
+                _rectTransform.anchoredPosition = startPosition;
             }
             else if (animationType == AnimationType.Scale)
             {
                 _rectTransform.localScale = startScale;
+            }
+
+            if (playOnAwake)
+            {
+                PlayAnimation();
             }
         }
 
@@ -55,20 +61,47 @@ namespace Archer.UI
             if (animationType == AnimationType.FadeIn)
             {
                 Debug.Log("Fade In");
-                // Fade-in animation
-                _image.DOFade(1.0f, animationDuration).SetEase(easeType).SetDelay(delayBeforeStart);
+                if (loop)
+                {
+                    _image.DOFade(1.0f, animationDuration).SetEase(easeType).SetDelay(delayBeforeStart).SetLoops(-1,LoopType.Yoyo);
+
+                }
+                else
+                {
+                    _image.DOFade(1.0f, animationDuration).SetEase(easeType).SetDelay(delayBeforeStart);
+
+                }
             }
             else if (animationType == AnimationType.MoveFromOutside)
             {
                 Debug.Log("MoveFromOutside");
 
-                _rectTransform
-                    .DOAnchorPos(new Vector2(_endPosition.x, _endPosition.y),
-                        animationDuration).SetEase(easeType).SetDelay(delayBeforeStart);
+                if (loop)
+                {
+                    _rectTransform
+                        .DOAnchorPos(new Vector2(_endPosition.x, _endPosition.y),
+                            animationDuration).SetEase(easeType).SetDelay(delayBeforeStart).SetLoops(-1,LoopType.Yoyo);
+                }
+                else
+                {
+                    _rectTransform
+                        .DOAnchorPos(new Vector2(_endPosition.x, _endPosition.y),
+                            animationDuration).SetEase(easeType).SetDelay(delayBeforeStart);
+                }
             }
             else if (animationType == AnimationType.Scale)
+
             {
-                _rectTransform.DOScale(endScale, animationDuration).SetEase(easeType).SetDelay(delayBeforeStart);
+                if (loop)
+                {
+                    _rectTransform.DOScale(endScale, animationDuration).SetEase(easeType).SetDelay(delayBeforeStart).SetLoops(-1,LoopType.Yoyo);
+
+                }
+                else
+                {
+                    _rectTransform.DOScale(endScale, animationDuration).SetEase(easeType).SetDelay(delayBeforeStart);
+
+                }
             }
         }
     }
