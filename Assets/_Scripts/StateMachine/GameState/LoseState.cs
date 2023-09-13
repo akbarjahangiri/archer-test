@@ -7,6 +7,7 @@ namespace _Scripts.StateMachine.GameState
     {
         public override void EnterState(GameStateManager context)
         {
+            context.HudManager.HandleLose();
             Debug.Log("you lose!");
         }
 

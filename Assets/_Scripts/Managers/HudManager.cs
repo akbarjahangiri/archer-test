@@ -17,8 +17,10 @@ namespace Archer.Managers
         [SerializeField] private TextMeshProUGUI minScore;
         [SerializeField] private TextMeshProUGUI playerScore;
         [SerializeField] private Button exitLevelButton;
+        [SerializeField] private Button loseExitLevelButton;
         [SerializeField] private RectTransform loadingNextLevelImage;
         [SerializeField] private RectTransform victoryPanel;
+        [SerializeField] private RectTransform losePanel;
         [SerializeField] private TextMeshProUGUI arrowCount;
         [SerializeField] private TextMeshProUGUI victoryScore;
         [SerializeField] private GameObject victoryPlayerName;
@@ -43,6 +45,7 @@ namespace Archer.Managers
             }
 
             exitLevelButton.onClick.AddListener(GameManager.Instance.ExitLevel);
+            loseExitLevelButton.onClick.AddListener(GameManager.Instance.ExitLevel);
             saveVictoryResultButton.onClick.AddListener(SaveVictoryScore);
         }
 
@@ -50,6 +53,7 @@ namespace Archer.Managers
         private void OnDestroy()
         {
             exitLevelButton.onClick.RemoveListener(GameManager.Instance.ExitLevel);
+            loseExitLevelButton.onClick.RemoveListener(GameManager.Instance.ExitLevel);
             saveVictoryResultButton.onClick.RemoveListener(SaveVictoryScore);
         }
 
@@ -155,6 +159,11 @@ namespace Archer.Managers
         public void RemoveArrow(string remainArrows)
         {
             arrowCount.text = "x" + remainArrows;
+        }
+
+        public void HandleLose()
+        {
+            losePanel.gameObject.SetActive(true);
         }
     }
 }
